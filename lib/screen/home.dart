@@ -13,7 +13,7 @@ import 'package:oaubot/services/map_request.dart';
 
 // import 'login_signup_page.dart';
 
-const kGoogleApiKey = 'AIzaSyDZQwf70GpoKQUPUn07m-G1AEOoqjawXxQ';
+const kGoogleApiKey = 'API_KEY';
 
 List<LatLng> result = <LatLng>[];
 
