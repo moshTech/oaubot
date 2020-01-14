@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:data_connection_checker/data_connection_checker.dart';
 import 'package:flutter/material.dart';
 import 'package:oaubot/screen/forgot_password.dart';
 import '../services/authentication.dart';
@@ -24,6 +27,8 @@ class _LoginSignUpPageState extends State<LoginSignUpPage> {
   // Initial form is login form
   FormMode _formMode = FormMode.LOGIN;
   bool _isIos;
+
+  StreamSubscription<DataConnectionStatus> listener;
   bool _isLoading;
 
   // Check if form is valid before perform login or signup
@@ -52,40 +57,52 @@ class _LoginSignUpPageState extends State<LoginSignUpPage> {
       _errorMessage = "";
       _isLoading = true;
     });
-    if (_validateAndSave()) {
-      String userId = "";
-      try {
-        if (_formMode == FormMode.LOGIN) {
-          userId = await widget.auth.signIn(_email, _password);
-          print('Signed in: $userId');
-        } else {
-          _showAccountCreatedDialog();
-          userId = await widget.auth.signUp(_email, _password);
-          print('Signed up user: $userId');
-        }
-        setState(() {
-          _isLoading = false;
-        });
 
-        if (userId.length > 0 &&
-            userId != null &&
-            _formMode == FormMode.LOGIN) {
-          widget.onSignedIn();
-        }
-      } catch (e) {
-        print('Error: $e');
-        setState(() {
-          _isLoading = false;
-          if (_isIos) {
-            _errorMessage = e.details;
+    DataConnectionStatus status = await checkInternetConnection();
+    if (status == DataConnectionStatus.connected) {
+      if (_validateAndSave()) {
+        _isLoading = false;
+        String userId = "";
+        try {
+          if (_formMode == FormMode.LOGIN) {
+            userId = await widget.auth.signIn(_email, _password);
+            print('Signed in: $userId');
+          } else {
+            userId = await widget.auth.signUp(_email, _password);
+            _showAccountCreatedDialog();
+
+            print('Signed up user: $userId');
           }
-          if (e.message.contains('An internal error has occurred.')) {
-            _errorMessage = 'No internet connecton';
-          } else
-            _errorMessage = e.message;
-          print(e.message);
-        });
+          setState(() {
+            _isLoading = false;
+          });
+
+          if (userId.length > 0 &&
+              userId != null &&
+              _formMode == FormMode.LOGIN) {
+            widget.onSignedIn();
+          }
+        } catch (e) {
+          print('Error: $e');
+          setState(() {
+            if (_isIos) {
+              _errorMessage = e.details;
+            }
+            if (e.message.contains('An internal error has occurred.')) {
+              _errorMessage = 'No internet connecton';
+            } else
+              _errorMessage = e.message;
+            print(e.message);
+          });
+        }
       }
+    } else {
+      showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+                title: Text('No Internet'),
+                content: Text('Check your internet connection.'),
+              ));
     }
   }
 
@@ -94,6 +111,45 @@ class _LoginSignUpPageState extends State<LoginSignUpPage> {
     _errorMessage = "";
     _isLoading = false;
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    listener.cancel();
+    super.dispose();
+  }
+
+  checkInternetConnection() async {
+    // Simple check to see if we have internet
+    print("The statement 'this machine is connected to the Internet' is: ");
+    print(await DataConnectionChecker().hasConnection);
+    // returns a bool
+
+    // We can also get an enum value instead of a bool
+    print("Current status: ${await DataConnectionChecker().connectionStatus}");
+    // prints either DataConnectionStatus.connected
+    // or DataConnectionStatus.disconnected
+
+    // This returns the last results from the last call
+    // to either hasConnection or connectionStatus
+    print("Last results: ${DataConnectionChecker().lastTryResults}");
+
+    // actively listen for status updates
+    // this will cause DataConnectionChecker to check periodically
+    // with the interval specified in DataConnectionChecker().checkInterval
+    // until listener.cancel() is called
+    listener = DataConnectionChecker().onStatusChange.listen((status) {
+      switch (status) {
+        case DataConnectionStatus.connected:
+          print('Data connection is available.');
+          break;
+        case DataConnectionStatus.disconnected:
+          print('You are disconnected from the internet.');
+          break;
+      }
+    });
+
+    return await DataConnectionChecker().connectionStatus;
   }
 
   void _changeFormToSignUp() {
@@ -119,10 +175,7 @@ class _LoginSignUpPageState extends State<LoginSignUpPage> {
       body: Stack(
         children: <Widget>[
           _showBody(),
-          Container(
-            color: Colors.black,
-            child: _showCircularProgress(),
-          ),
+          _showCircularProgress(),
         ],
       ),
     );
@@ -130,7 +183,7 @@ class _LoginSignUpPageState extends State<LoginSignUpPage> {
 
   Widget _showCircularProgress() {
     if (_isLoading) {
-      return CircularProgressIndicator();
+      return Center(child: CircularProgressIndicator());
     }
     return Container(
       height: 0.0,
@@ -162,7 +215,7 @@ class _LoginSignUpPageState extends State<LoginSignUpPage> {
 
   Widget _showBody() {
     return Container(
-        padding: EdgeInsets.all(16.0),
+        padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 20.0),
         child: Form(
           key: _formKey,
           child: ListView(
@@ -240,20 +293,24 @@ class _LoginSignUpPageState extends State<LoginSignUpPage> {
   }
 
   Widget _showEmailInput() {
-    _isLoading = false;
     return Padding(
       padding: const EdgeInsets.fromLTRB(0.0, 16.0, 0.0, 0.0),
       child: TextFormField(
         maxLines: 1,
         keyboardType: TextInputType.emailAddress,
-        textInputAction: TextInputAction.next,
+        textInputAction: TextInputAction.done,
         autofocus: false,
         decoration: InputDecoration(
-            hintText: 'Email',
-            icon: Icon(
-              Icons.mail,
-              color: Colors.grey,
-            )),
+          contentPadding: EdgeInsets.fromLTRB(20.0, 15.0, 20.0, 15.0),
+          hintText: 'Email',
+          prefixIcon: Icon(
+            Icons.mail,
+            color: Colors.grey,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(22.0),
+          ),
+        ),
         validator: (value) => value.isEmpty ? "Email can't be empty" : null,
         onSaved: (value) => _email = value.trim(),
       ),
@@ -261,7 +318,7 @@ class _LoginSignUpPageState extends State<LoginSignUpPage> {
   }
 
   Widget _showPasswordInput() {
-    return Padding(
+    return Container(
       padding: const EdgeInsets.fromLTRB(0.0, 10.0, 0.0, 0.0),
       child: TextFormField(
         maxLines: 1,
@@ -269,8 +326,9 @@ class _LoginSignUpPageState extends State<LoginSignUpPage> {
         autofocus: false,
         textInputAction: TextInputAction.done,
         decoration: InputDecoration(
+          contentPadding: EdgeInsets.fromLTRB(20.0, 15.0, 20.0, 15.0),
           hintText: 'Password',
-          icon: Icon(
+          prefixIcon: Icon(
             Icons.lock,
             color: Colors.grey,
           ),
@@ -285,6 +343,9 @@ class _LoginSignUpPageState extends State<LoginSignUpPage> {
                     Icons.visibility,
                     color: Colors.grey,
                   ),
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(22.0),
           ),
         ),
         validator: (value) => value.isEmpty ? "Password can't be empty" : null,

@@ -11,7 +11,7 @@
 
     <application android:name="io.flutter.app.FlutterApplication" android:label="oaubot" android:icon="@drawable/logo1">
 
-        <meta-data android:name="com.google.android.geo.API_KEY" android:value="API_KEY"/>
+        <meta-data android:name="com.google.android.geo.API_KEY" android:value="AIzaSyDZQwf70GpoKQUPUn07m-G1AEOoqjawXxQ"/>
 
         <activity android:name=".MainActivity" android:launchMode="singleTop" android:theme="@style/LaunchTheme" android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode" android:hardwareAccelerated="true" android:windowSoftInputMode="adjustResize">
             <intent-filter>

@@ -7,12 +7,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:location/location.dart' as loc;
+import 'package:oaubot/screen/login_signup_page.dart';
 import 'package:oaubot/services/authentication.dart';
 import 'package:oaubot/services/map_request.dart';
 
-import 'login_signup_page.dart';
+// import 'login_signup_page.dart';
 
-const kGoogleApiKey = 'API_KEY';
+const kGoogleApiKey = 'AIzaSyDZQwf70GpoKQUPUn07m-G1AEOoqjawXxQ';
 
 List<LatLng> result = <LatLng>[];
 
@@ -67,10 +68,20 @@ class _HomePageState extends State<HomePage> {
 
   String _userEmail = '';
 
+  static String where = 'Where would you like to go?';
+  static String directionFrom = 'Direction from ';
+  static String to = 'to ';
+  static String instructionFrom = 'Instruction: From your current location ';
+  static String lookFor = 'look for nearest bus stop then take a bike to ';
+  static String duration = 'Duration: ';
+  static String distance = 'Distance: ';
+  static String price = 'Price: ';
+  static String note =
+      'Note: You can also turn-off your location and follow the blue line on the map to get your detailed direction';
+  static String language = 'Language';
+
   @override
   void initState() {
-    super.initState();
-
     initPlatformState();
     widget.auth.getCurrentUser().then((user) {
       setState(() {
@@ -79,6 +90,14 @@ class _HomePageState extends State<HomePage> {
         }
       });
     });
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _locationSubscription.cancel();
+
+    super.dispose();
   }
 
   _signOut() async {
@@ -91,6 +110,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   initPlatformState() async {
+    final GoogleMapController controller = await _controller.future;
     await _locationService.changeSettings(
         accuracy: loc.LocationAccuracy.HIGH, interval: 1000);
 
@@ -115,7 +135,6 @@ class _HomePageState extends State<HomePage> {
               zoom: 18.0,
             );
 
-            final GoogleMapController controller = await _controller.future;
             controller.animateCamera(
                 CameraUpdate.newCameraPosition(_currentCameraPosition));
 
@@ -148,19 +167,19 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  slowRefresh() async {
-    _locationSubscription.cancel();
-    await _locationService.changeSettings(
-        accuracy: loc.LocationAccuracy.BALANCED, interval: 10000);
-    _locationSubscription =
-        _locationService.onLocationChanged().listen((loc.LocationData result) {
-      if (mounted) {
-        setState(() {
-          _currentLocation = result;
-        });
-      }
-    });
-  }
+  // slowRefresh() async {
+  //   _locationSubscription.cancel();
+  //   await _locationService.changeSettings(
+  //       accuracy: loc.LocationAccuracy.BALANCED, interval: 10000);
+  //   _locationSubscription =
+  //       _locationService.onLocationChanged().listen((loc.LocationData result) {
+  //     if (mounted) {
+  //       setState(() {
+  //         _currentLocation = result;
+  //       });
+  //     }
+  //   });
+  // }
 
   List<LatLng> _convertToLatLng(List points) {
     for (int i = 0; i < points.length; i++) {
@@ -211,7 +230,7 @@ class _HomePageState extends State<HomePage> {
       Marker(
           markerId: MarkerId("112"),
           position: location,
-          infoWindow: InfoWindow(title: address, snippet: "by mosh"),
+          infoWindow: InfoWindow(title: address, snippet: ""),
           icon: BitmapDescriptor.defaultMarker),
     );
   }
@@ -282,7 +301,7 @@ class _HomePageState extends State<HomePage> {
                 color: Colors.white,
                 // decoration: BoxDecoration(),
                 child: Text(
-                  'Where would you like to go?',
+                  where,
                   style: TextStyle(
                     fontSize: 18.0,
                     color: Colors.pink,
@@ -336,13 +355,77 @@ class _HomePageState extends State<HomePage> {
   void choiceAction(String value) {
     switch (value) {
       case 'Logout':
-        Navigator.pushReplacement(context,
-            MaterialPageRoute(builder: (context) {
+        setState(() {
+          Navigator.pushReplacement(context,
+              MaterialPageRoute(builder: (context) {
+            return LoginSignUpPage(
+              auth: Auth(),
+            );
+          }));
           _signOut();
-          return LoginSignUpPage(
-            auth: Auth(),
-          );
-        }));
+        });
+        break;
+      case 'Yorùbá':
+        setState(() {
+          where = 'Ibo ni o fẹ́ lọ?';
+          directionFrom = 'Ìtọ́sọ́nà láti ';
+          to = 'lọ ';
+          instructionFrom = 'Ẹ̀kọ́: Láti ipò rẹ lọ́wọ́lọ́wọ́ ';
+          lookFor =
+              'wá ibùdó ọkọ̀ ayọ́kẹ́lẹ́ tó súnmọ́, lẹ́hìnná gun ọ̀kadà lọ sí ';
+          duration = 'Iye àkókò: ';
+          distance = 'Bó se jìnà tó: ';
+          price = 'Iye: ';
+          note =
+              'Àkíyèsí: O tún lè pa ipò rẹ́, kí o tẹ̀lé láìnì búlùù lórí máàpù láti gba ìtọ́sọ́nà àlàyé rẹ.';
+          language = 'Ẹ̀dẹ̀';
+        });
+        break;
+      case 'Igbo':
+        setState(() {
+          where = 'Ebee ka i ga-achọ iga?';
+          directionFrom = 'Ntuziaka si ';
+          to = 'ka ';
+          instructionFrom = 'Ntuziaka: Si ebe I di ugbu a ';
+          lookFor =
+              'chọọ, maka nkwusi bos kacha nso wee jiri igwe kwu otu ebe gaa ';
+          duration = 'Ogologo oge: ';
+          distance = 'Distance: ';
+          price = 'Ọnuahia: ';
+          note =
+              'Mara: cannwekwara ike igbanyu, ọnọdu gi ma soro eriri igwe na-acha anunu anunu na maapu iji nweta uzo zuru ezu gi.';
+          language = 'Asusu';
+        });
+        break;
+      case 'Hausa':
+        setState(() {
+          where = 'Aina kuke so kuje?';
+          directionFrom = 'Jagora daga ';
+          to = 'zuwa ';
+          instructionFrom = 'Koyarwa: Daga wurin da kuke a yanzu ';
+          lookFor = 'nemi tashar bas mafi kusa sannan sai a dauki keke don  ';
+          duration = 'Tsawon lokaci: ';
+          distance = 'Distance: ';
+          price = 'Farashi: ';
+          note =
+              'Lura: Hakanan zaka iya kasha wurinka kuma bi layin shudi akan taswirar don samun cikakken jagora.';
+          language = 'Harshe';
+        });
+        break;
+      case 'English':
+        setState(() {
+          where = 'Where would you like to go?';
+          directionFrom = 'Direction from ';
+          to = 'to ';
+          instructionFrom = 'Instruction: From your current location ';
+          lookFor = 'look for nearest bus stop then take a bike to ';
+          duration = 'Duration: ';
+          distance = 'Distance: ';
+          price = 'Price: ';
+          note =
+              'Note: You can also turn-off your location and follow the blue line on the map to get your detailed direction';
+          language = 'Language';
+        });
         break;
       default:
     }
@@ -409,7 +492,7 @@ class _HomePageState extends State<HomePage> {
                 child: Column(
                   children: <Widget>[
                     Text(
-                      'Direction from ${route["legs"][0]["start_address"].toString()} to $desc.',
+                      '$directionFrom${route["legs"][0]["start_address"].toString()} $to$desc.',
                       textAlign: TextAlign.justify,
                       style: TextStyle(
                         color: Colors.white,
@@ -419,7 +502,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                     SizedBox(height: 5.0),
                     Text(
-                      'Instruction: From your current location (${route["legs"][0]["start_address"].toString()}), look for nearest bus stop then take a bike to $desc.',
+                      '$instructionFrom(${route["legs"][0]["start_address"].toString()}), $lookFor$desc.',
                       textAlign: TextAlign.justify,
                       style: TextStyle(
                         color: Colors.white,
@@ -431,7 +514,7 @@ class _HomePageState extends State<HomePage> {
                     Align(
                       alignment: Alignment.centerRight,
                       child: Text(
-                        'Duration: ${route["legs"][0]["duration"]["text"].toString()}',
+                        '$duration${route["legs"][0]["duration"]["text"].toString()}',
                         style: TextStyle(
                           color: Colors.white,
                           fontFamily: 'Lato',
@@ -443,7 +526,7 @@ class _HomePageState extends State<HomePage> {
                     Align(
                       alignment: Alignment.centerRight,
                       child: Text(
-                        'Distance: ${route["legs"][0]["distance"]["text"]}',
+                        '$distance${route["legs"][0]["distance"]["text"]}',
                         style: TextStyle(
                           color: Colors.white,
                           fontFamily: 'Lato',
@@ -456,10 +539,10 @@ class _HomePageState extends State<HomePage> {
                       alignment: Alignment.centerRight,
                       child: Text(
                         dist > 3.5 && dist <= 4.5
-                            ? 'Price: 100 naira'
+                            ? '$price 100 naira'
                             : dist > 2.5 && dist <= 3.5
-                                ? 'Price: 60 naira'
-                                : 'Price: 50 naira',
+                                ? '$price 60 naira'
+                                : '$price 50 naira',
                         style: TextStyle(
                           color: Colors.white,
                           fontFamily: 'Lato',
@@ -469,7 +552,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                     SizedBox(height: 5.0),
                     Text(
-                      'Note: You can also turn-off your location and follow the blue line on the map to get your detailed direction.',
+                      note,
                       textAlign: TextAlign.justify,
                       style: TextStyle(
                         color: Colors.white,
@@ -488,7 +571,7 @@ class _HomePageState extends State<HomePage> {
 
 class ActionItems {
   static const String en = 'English';
-  static const String yor = 'Yoruba';
+  static const String yor = 'Yorùbá';
   static const String igbo = 'Igbo';
   static const String hausa = 'Hausa';
   static const String logout = 'Logout';

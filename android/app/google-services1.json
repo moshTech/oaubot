@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "146192170174",
+    "firebase_url": "https://oaubot.firebaseio.com",
+    "project_id": "oaubot",
+    "storage_bucket": "oaubot.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:146192170174:android:2020e474fd1c5a159172ef",
+        "android_client_info": {
+          "package_name": "com.example.oaubot"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "146192170174-haaq9avlkmmtmnlh0dqs2tnbrl1a4j79.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCnZxJxS8Gv9LmiSi-kZJTLD6eteehGDJc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "146192170174-haaq9avlkmmtmnlh0dqs2tnbrl1a4j79.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
